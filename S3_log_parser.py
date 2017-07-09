@@ -17,6 +17,7 @@
 import re
 import os
 import geoip2.database
+import sys
 
 regex = re.compile(r'(?P<owner>\S+) (?P<bucket>\S+) (?P<time>\[[^]]*\]) (?P<ip>\S+) ' + 
 r'(?P<requester>\S+) (?P<reqid>\S+) (?P<operation>\S+) (?P<key>\S+) ' + 
@@ -39,22 +40,28 @@ for filename in os.listdir(directory):
         dict = match.groupdict()
         ip = dict.get("ip", "none")
         response = reader.city(ip)
-        
-        string = "{:<16} {}, {}, {}\n{}\n{}: {}\n{}\n\n".format(
-                                           dict.get("ip"),
-                                           response.city.name,
-                                           response.subdivisions.most_specific.name,
-                                           response.country.iso_code,
-                                           dict.get("useragent"),
-                                           dict.get("status"),
-                                           dict.get("request"),
-                                           dict.get("referrer")
-                                           )
-                                           
+
+        try:
+            string = "{}\n{:<16} {}, {}, {}\n{}\n{}: {}\n{}\n".format(
+                                               dict.get("time"),
+                                               dict.get("ip"),
+                                               response.city.name,
+                                               response.subdivisions.most_specific.name,
+                                               response.country.iso_code,
+                                               dict.get("useragent"),
+                                               dict.get("status"),
+                                               dict.get("request"),
+                                               dict.get("referrer")
+                                               )
+
+        except UnicodeEncodeError:
+            print('\n********\nFailed to parse Unicode Exception!\n********\n' + line + '\n\n')
+            continue
+
         if (dict.get("operation") == "WEBSITE.GET.OBJECT"):
             print string
-        
+                
     continue
 
 reader.close()    
-raw_input('Press enter to exit')
+# raw_input('Press enter to exit')
